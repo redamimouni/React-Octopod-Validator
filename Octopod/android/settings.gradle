@@ -1,0 +1,3 @@
+rootProject.name = 'OctoPodValidator'
+
+include ':app'
