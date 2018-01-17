@@ -1,57 +1,56 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
-
 import React, { Component } from 'react';
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
+import { AppRegistry, ActivityIndicator, ListView, Text, View } from 'react-native';
 
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' +
-    'Cmd+D or shake for dev menu',
-  android: 'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+export default class TimeSheet extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoading: true
+    }
+  }
 
-export default class App extends Component<{}> {
+  componentDidMount() {
+    return fetch('https://octopod.octo.com/api/v0/people/2142664391/time_input?page=1', {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer 6a9db7eac3f9f6821b687f71431672e3de4843e7bd6fbc46605ab247873c3861'
+      }
+    })
+    .then((response) => response.json())
+    .then((responseJson) => {
+      let ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+        this.setState({
+          isLoading: false,
+          dataSource: ds.cloneWithRows(responseJson)
+        }, function() {
+          // do something with new state
+        });
+      })
+    .catch((error) => {
+        console.error(error);
+    });
+  }
+
   render() {
+    if (this.state.isLoading) {
+      return (
+        <View style={{flex: 1, paddingTop: 20}}>
+          <ActivityIndicator />
+        </View>
+      );
+    }
+
     return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          To get started, edit App.js
-        </Text>
-        <Text style={styles.instructions}>
-          {instructions}
-        </Text>
+      <View style={{flex: 1, paddingTop: 20}}>
+        <ListView
+          dataSource={this.state.dataSource}
+          renderRow={(rowData) => <Text>{rowData.day}, {rowData.activity.title}</Text>}
+        />
       </View>
     );
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-});
+// skip this line if using Create React Native App
+AppRegistry.registerComponent('AwesomeProject', () => TimeSheet);
