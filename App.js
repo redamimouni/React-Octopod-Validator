@@ -24,7 +24,7 @@ export default class TimeSheet extends Component {
           isLoading: false,
           dataSource: ds.cloneWithRows(responseJson)
         }, function() {
-          // do something with new sta
+          // do something with new state
         });
       })
     .catch((error) => {
