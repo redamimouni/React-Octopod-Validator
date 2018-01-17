@@ -1,35 +1,83 @@
 import React, { Component } from 'react';
-import { AppRegistry, ActivityIndicator, ListView, Text, View } from 'react-native';
+import { AppRegistry, ActivityIndicator, FlatList, Text, View } from 'react-native';
+
+// https://github.com/xgfe/react-native-datepicker
+// npm install react-native-datepicker --save
+import DatePicker from 'react-native-datepicker'
+
+Array.prototype.groupBy = function(prop) {
+  return this.reduce(function(groups, item) {
+    var val = item[prop];
+    groups[val] = groups[val] || [];
+    groups[val].push(item);
+    return groups;
+  }, {});
+}
+
+
+function groupByActivityAndSumDays(responseJson, pickedDate) {
+  const activities = responseJson.map((time) => {
+    return {
+      title: time.activity.title,
+      days: parseFloat(time.time_in_days)
+    };
+  });
+
+  let groupedActivities = [];
+  for (const activityIndex in activities) {
+    let activity = activities[activityIndex];
+    let index = groupedActivities.findIndex((item) =>
+      activity.title === item.title
+    );
+
+    if (index === -1) {
+      groupedActivities.push(activity)
+    } else {
+      groupedActivities[index].days += activity.days
+    }
+  }
+
+  return groupedActivities;
+}
 
 export default class TimeSheet extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoading: true
+      isLoading: true,
+      date: "2018-01-01"
     }
   }
 
-  componentDidMount() {
-    return fetch('https://octopod.octo.com/api/v0/people/2142664391/time_input?page=1', {
+  fetchTimeSheet() {
+    // https://octopod.octo.com/api/v0/people/2142664391/time_input?from_date=${this.state.date}T01%3A00%3A00
+    const url = "https://octopod.octo.com/api/v0/people/2142664391/time_input?from_date=" + this.state.date + "T01%3A00%3A00";
+    return fetch(url, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer 6a9db7eac3f9f6821b687f71431672e3de4843e7bd6fbc46605ab247873c3861'
+        'Authorization': 'Bearer 0fc5e0c98f8d8129c9407f9024d908e7d7f5d1628fb6dcec7bca2c5d97e85f2e'
       }
     })
     .then((response) => response.json())
     .then((responseJson) => {
-      let ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-        this.setState({
-          isLoading: false,
-          dataSource: ds.cloneWithRows(responseJson)
-        }, function() {
-          // do something with new state
-        });
-      })
+      const ds = groupByActivityAndSumDays(responseJson, this.state.date);
+      this.setState({
+        isLoading: false,
+        dataSource: ds
+      });
+    })
     .catch((error) => {
         console.error(error);
     });
+  }
+
+  componentDidMount() {
+    this.fetchTimeSheet();
+  }
+
+  componentDidUpdate() {
+    this.fetchTimeSheet();
   }
 
   render() {
@@ -43,9 +91,33 @@ export default class TimeSheet extends Component {
 
     return (
       <View style={{flex: 1, paddingTop: 20}}>
-        <ListView
-          dataSource={this.state.dataSource}
-          renderRow={(rowData) => <Text>{rowData.day}, {rowData.activity.title}</Text>}
+        <DatePicker
+            style={{width: 200, marginBottom: 10}}
+            date={this.state.date}
+            mode="date"
+            placeholder="select date"
+            format="YYYY-MM-DD"
+            minDate="2015-01-01"
+            maxDate="2018-02-01"
+            confirmBtnText="Confirm"
+            cancelBtnText="Cancel"
+            customStyles={{
+              dateIcon: {
+                position: 'absolute',
+                left: 0,
+                top: 4,
+                marginLeft: 0
+              },
+              dateInput: {
+                marginLeft: 36
+              }
+              // ... You can check the source to find the other keys.
+            }}
+            onDateChange={(date) => {this.setState({date: date, isLoading: true})}}
+          />
+        <FlatList
+          data={this.state.dataSource}
+          renderItem={({item}) => <Text>{item.title} {item.days}</Text>}
         />
       </View>
     );
