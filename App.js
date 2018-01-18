@@ -5,16 +5,6 @@ import { AppRegistry, ActivityIndicator, FlatList, Text, View } from 'react-nati
 // npm install react-native-datepicker --save
 import DatePicker from 'react-native-datepicker'
 
-Array.prototype.groupBy = function(prop) {
-  return this.reduce(function(groups, item) {
-    var val = item[prop];
-    groups[val] = groups[val] || [];
-    groups[val].push(item);
-    return groups;
-  }, {});
-}
-
-
 function groupByActivityAndSumDays(responseJson, pickedDate) {
   const activities = responseJson.map((time) => {
     return {
@@ -56,7 +46,7 @@ export default class TimeSheet extends Component {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer 0fc5e0c98f8d8129c9407f9024d908e7d7f5d1628fb6dcec7bca2c5d97e85f2e'
+        'Authorization': 'Bearer b22767984aba5119c02fa83007f0ff7bb0c559710d19a4dad7d42bdbcd7cbf83'
       }
     })
     .then((response) => response.json())
